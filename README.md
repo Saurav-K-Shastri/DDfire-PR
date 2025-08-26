@@ -2,7 +2,7 @@
 
 Official PyTorch implementation of Solving Inverse Problems using Diffusion with Fast Iterative Renoising. Code modified from DPS.
 
-by Matthew Bendel, Saurav Shastri, Rizwan Ahmad, and Philip Schniter.
+by Matthew C. Bendel, Saurav K. Shastri, Rizwan Ahmad, and Philip Schniter.
 
 ## Getting Started
 ### 1) Clone the repository
