@@ -1,4 +1,0 @@
-deg: "inp_box"
-K: 500
-delta: 0.2
-eta: 1.5 # Will need to make it smaller for NFEs < 1000

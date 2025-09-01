@@ -1,0 +1,6 @@
+deg: "pr_osf"
+K: 20
+delta: 0.0
+eta: 0.85
+guidance: True
+guidance_t: 600 

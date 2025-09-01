@@ -1,0 +1,8 @@
+use_stochastic_denoising: True
+use_colored_noise: True
+estimate_nu: True
+clamp_ddim: False
+gam_w_correct: 1e4 
+max_cg_iters: 50 # not used in pr setup
+cg_tolerance: 1e-5 # not used in pr setup
+nu_lookup: 'eta_scale/ffhq.npy'

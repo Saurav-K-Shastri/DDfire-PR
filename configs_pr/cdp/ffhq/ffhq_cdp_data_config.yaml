@@ -1,0 +1,9 @@
+data_path: "/local/storage/FFHQ/ffhq256_firetest" # TODO: CHANGE THIS TO DESIRED OUT PATH
+data_path_test: "/local/storage/FFHQ/ffhq256_firetest" # TODO: CHANGE THIS TO DESIRED OUT PATH
+GLM_fire_out: "/local/storage/DDfire_PR/results/FFHQ/" # TODO: CHANGE THIS TO DESIRED OUT PATH
+
+batch_size: 8
+image_size: 256
+
+measurement_data_file: "/local/storage/DDfire_PR/measurement_y_testset/FFHQ/pr_cdp/y_mat_alpha_45.pt" # TODO: CHANGE THIS TO DESIRED OUT PATH
+sig_y_file: "/local/storage/DDfire_PR/measurement_y_testset/FFHQ/pr_cdp/sig_mat_alpha_45.pt" # TODO: CHANGE THIS TO DESIRED OUT PATH

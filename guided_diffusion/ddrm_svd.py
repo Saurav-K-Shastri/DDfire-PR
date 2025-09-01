@@ -6,9 +6,19 @@ from scipy.stats import multivariate_normal
 from util.img_utils import Blurkernel, fft2_m
 from motionblur.motionblur import Kernel
 
+from fastmri_utils2.fftc import fft2c_new as fft2c
+from fastmri_utils2.fftc import ifft2c_new as ifft2c
+from fastmri_utils2.math import (
+    complex_abs,
+    complex_abs_sq,
+    complex_conj,
+    complex_mul,
+    tensor_to_complex_np,
+)
+
 def get_operator(problem_config, data_config, device):
     accepted_operators = ['sr_bicubic4', 'sr_bicubic8', 'blur_uni', 'blur_motion', 'blur_gauss', 'blur_aniso', 'color',
-                          'sr4', 'sr8', 'inp_box', 'denoising']
+                          'sr4', 'sr8', 'inp_box', 'denoising', 'pr_osf', 'pr_cdp']
     if problem_config["deg"] not in accepted_operators:
         raise RuntimeError('Unknown degradation.')
 
@@ -67,6 +77,41 @@ def get_operator(problem_config, data_config, device):
         sr = True
         blur_by = int(problem_config["deg"][2:])
         H = SuperResolution(3, 256, blur_by, device)
+    elif problem_config["deg"] == 'pr_osf':
+        print("Using OSF for phase retrieval.")
+        imsize = data_config["image_size"]
+        if imsize != 256:
+            raise RuntimeError("current OSF setup supports only image size of 256")
+        d = imsize*imsize
+        p = 4
+        m = p*d
+        oversampled_image_size = int(np.sqrt(m))       
+        support = torch.zeros(1,1,3,oversampled_image_size,oversampled_image_size)
+        pad = (oversampled_image_size - imsize)
+        pad_left = pad//2 # same amount at top
+        pad_right = pad - pad_left # same amount at bottom
+        support[:,:,:,pad_left:pad_left+imsize,pad_left:pad_left+imsize] = 1
+        support = support.to(device)
+        H = OSF(3,imsize, p, device)
+    elif problem_config["deg"] == 'pr_cdp':
+        print("Using CDP for phase retrieval.")
+        imsize = data_config["image_size"]
+        if imsize != 256:
+            raise RuntimeError("current CDP setup supports only image size of 256")
+        d = imsize*imsize
+        p = 4
+        m = p*d
+        SamplingRate = p
+
+        fixed_rand_mat = torch.load('./guided_diffusion/fixed_rand_mat_CDP.pt')
+        fixed_rand_mat_3_chan_6_dim = torch.zeros(1,SamplingRate,3,imsize,imsize,2)
+        for i in range(SamplingRate):
+            for k in range(3):
+                fixed_rand_mat_3_chan_6_dim[:,i,k,:,:,:] = fixed_rand_mat[:,i,:,:,:]
+
+        H = CDP(3,imsize, fixed_rand_mat_3_chan_6_dim.to(device), device)
+
+
     else:
         H = Denoising(3, 256, device)
 
@@ -1208,6 +1253,113 @@ class Deblurring2D(H_functions):
 
     def singulars(self):
         return self._singulars.repeat(1, 3).reshape(-1)
+
+    def add_zeros(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+    
+
+# Oversampled Fourier
+class OSF(H_functions):
+    def __init__(self, channels, img_dim, oversampling_factor, device):
+
+        self.channels = channels
+        self.device = device
+
+        self.image_size = img_dim
+        self.n = self.image_size*self.image_size
+        self.oversampling_factor = oversampling_factor
+        self.m = int(self.n*self.oversampling_factor)
+        self.oversampled_image_size = int(np.sqrt(self.m))
+        self.pad = (self.oversampled_image_size - self.image_size)
+        self.pad_left = self.pad//2 # same amount at top
+        self.pad_right = self.pad - self.pad_left # same amount at bottom
+
+        self._singulars = torch.ones(channels * img_dim ** 2, device=device)
+
+    def V(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+
+    def Vt(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+
+    def U(self, vec):
+        
+        image_2D = vec.clone().reshape(vec.shape[0], self.channels, self.image_size, self.image_size)
+        image_2D_os = torch.nn.functional.pad(image_2D, (self.pad_left, self.pad_right, self.pad_left, self.pad_right))
+
+        image_2D_os_new = torch.zeros(vec.shape[0], self.channels, self.oversampled_image_size, self.oversampled_image_size, 2, device=self.device)
+        image_2D_os_new[...,0] = image_2D_os
+        
+        out = fft2c(image_2D_os_new)
+        outc = torch.view_as_complex(out)
+
+        return outc.reshape(vec.shape[0], -1).contiguous()
+
+    def Ut(self, vec):
+        kspace_2D = torch.view_as_real((vec.clone().reshape(vec.shape[0], self.channels, self.oversampled_image_size, self.oversampled_image_size)).contiguous())
+        image_2D_os_new = ifft2c(kspace_2D)
+        image_2D = image_2D_os_new[:,:,self.pad_left:self.pad_left+self.image_size,self.pad_left:self.pad_left+self.image_size,0].contiguous()
+        return image_2D.reshape(vec.shape[0], -1)
+
+    def singulars(self):
+        return self._singulars
+
+    def add_zeros(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+    
+
+# CDP
+class CDP(H_functions):
+    def __init__(self, channels, img_dim, fixed_rand_mat, device, my_batch_size =1):
+
+        self.channels = channels
+        self.device = device
+        self.my_batch_size = my_batch_size
+        self.image_size = img_dim
+        self.n = self.image_size*self.image_size
+        self.fixed_rand_mat = fixed_rand_mat
+        
+        self.Sampling_Rate = self.fixed_rand_mat.shape[1]
+
+        self._singulars = torch.ones(channels * img_dim ** 2, device=device)
+        self.fixed_rand_mat_new = self.fixed_rand_mat.repeat(my_batch_size,1,1,1,1,1).contiguous()
+
+    def V(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+
+    def Vt(self, vec):
+        return vec.clone().reshape(vec.shape[0], -1)
+
+    def U(self, vec):
+        
+        image_2D = vec.clone().reshape(vec.shape[0], self.channels, self.image_size, self.image_size)
+        image_2D_os = image_2D.unsqueeze(1).repeat(1,self.Sampling_Rate,1,1,1).contiguous()
+
+        image_2D_os_new = torch.view_as_real(image_2D_os + 0j*image_2D_os)
+        # image_2D_os_new = torch.zeros(vec.shape[0], self.Sampling_Rate, self.channels, self.image_size, self.image_size, 2, device=self.device)
+        # image_2D_os_new[...,0] = image_2D_os
+        X2 = complex_mul(image_2D_os_new,self.fixed_rand_mat_new)
+        out = fft2c(X2)*np.sqrt(1/self.Sampling_Rate)
+        outc = torch.view_as_complex(out)
+
+        return outc.reshape(vec.shape[0], -1).contiguous()
+
+    def Ut(self, vec):
+        kspace_2D = torch.view_as_real((vec.clone().reshape(vec.shape[0], self.Sampling_Rate, self.channels, self.image_size, self.image_size)).contiguous())
+        image_2D_os_new = ifft2c(kspace_2D)
+        out = (torch.sum(complex_mul(image_2D_os_new, complex_conj(self.fixed_rand_mat_new)),dim = 1))*np.sqrt(1/self.Sampling_Rate)
+        image_2D = out[:,:,:,:,0]
+        return image_2D.reshape(vec.shape[0], -1).contiguous()
+    
+    def Ut_complex(self, vec):
+        kspace_2D = torch.view_as_real((vec.clone().reshape(vec.shape[0], self.Sampling_Rate, self.channels, self.image_size, self.image_size)).contiguous())
+        image_2D_os_new = ifft2c(kspace_2D)
+        out = (torch.sum(complex_mul(image_2D_os_new, complex_conj(self.fixed_rand_mat_new)),dim = 1))*np.sqrt(1/self.Sampling_Rate)
+        image_2D = out[:,:,:,:,0] + 1j*out[:,:,:,:,1]
+        return image_2D.reshape(vec.shape[0], -1).contiguous()
+
+    def singulars(self):
+        return self._singulars
 
     def add_zeros(self, vec):
         return vec.clone().reshape(vec.shape[0], -1)

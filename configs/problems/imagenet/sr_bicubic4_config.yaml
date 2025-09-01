@@ -1,4 +1,0 @@
-deg: "sr_bicubic4"
-K: 650
-delta: 0.6
-eta: 1.5 # Will need to make it smaller for NFEs < 1000

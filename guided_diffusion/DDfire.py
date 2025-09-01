@@ -2,12 +2,12 @@ import yaml
 import numpy as np
 import torch
 from tqdm.auto import tqdm
-from guided_diffusion.fire import FIRE
+from guided_diffusion.fire import FIRE_PR
 
 
 class DDfire:
     def __init__(self, fire_config, ref_tensor, model, model_betas, A, K, delta, eta_ddim=1.0, N_tot=1000,
-                 quantize_ddim=False):
+                 quantize_ddim=False, guidance = False, guidance_t = 1000, pr_channel = "pr_osf"):
         self.K = K
         self.delta = delta
         self.N_tot = N_tot
@@ -34,6 +34,7 @@ class DDfire:
         t_list = list(set(all_steps))
         t_list.sort()
         if quantize_ddim:
+            # raise NotImplementedError("Quantized DDIM is not implemented for PR problems.")
             vp_ddim_prec = vp_prec[np.array(t_list)]
             self.K = len(vp_ddim_prec)
 
@@ -42,15 +43,22 @@ class DDfire:
         # set gam_tgt using delta, the fraction of 1-iter steps
         self.K_ddim1 = 1 + int(self.delta * (self.K - 1))  # number of 1-iter steps, in 1,...,K_ddim-1
 
-        iters_ire_, rho = self.run_bisection_search(vp_ddim_prec)
+        self.guidance = guidance
+        if self.guidance:
+            self.vp_prec_guidance = vp_prec[guidance_t-1]
+            iters_ire_, rho = self.run_bisection_search(vp_ddim_prec + self.vp_prec_guidance)
+        else:
+            self.vp_prec_guidance = 0
+            iters_ire_, rho = self.run_bisection_search(vp_ddim_prec)
 
         self.rho = rho
         self.N_k = iters_ire_.tolist()
-        print(np.sum(self.N_k))
+
 
         self.vp_ddim_prec = vp_ddim_prec
         self.alpha_bars = 1 / (1 + 1 / self.vp_ddim_prec)
-        self.fire_runner = FIRE(ref_tensor, vp_prec, model, A, rho, 1 / vp_prec[0], fire_config)
+        self.fire_runner = FIRE_PR(ref_tensor, vp_prec, model, A, rho, 1 / vp_prec[0], self.model_alpha_bars, fire_config, pr_channel)
+        
 
     def run_bisection_search(self, vp_ddim_prec):
         # set gam_tgt using delta, the fraction of 1-iter steps
@@ -90,7 +98,7 @@ class DDfire:
 
         return iters_ire_, rho
 
-    def p_sample_loop(self, x_start, y, sig_y=0.001):
+    def p_sample_loop(self, x_start, y, sig_y=0.001, guidance_clean_image_m1t1 = None):
         """
         The function used for sampling from noise.
         """
@@ -103,8 +111,7 @@ class DDfire:
         for k in pbar:
             fire_iters = int(self.N_k[k])
             fire_prec = self.vp_ddim_prec[k]
-            E_x_0_g_x_t_y = self.fire_runner.run_fire(x_t, y, sig_y, fire_prec, fire_iters, first_k=k == self.K - 1,
-                                                      ve_init=self.edm_sample, quantized_t=self.quantize_ddim)
+            E_x_0_g_x_t_y = self.fire_runner.run_fire_pr(x_t, y, sig_y, fire_prec, fire_iters, guidance = self.guidance, guidance_clean_image_m1t1=guidance_clean_image_m1t1, vp_prec_guidance=self.vp_prec_guidance, quantized_t = self.quantize_ddim)
             x_t = self.ddim_update(x_t, E_x_0_g_x_t_y, k)
 
         return x_t.clamp(min=-1., max=1.)

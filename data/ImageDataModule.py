@@ -53,7 +53,61 @@ class DataTransform:
         return gt.float()
 
 
-class ImageDataModule(pl.LightningDataModule):
+# class ImageDataModule(pl.LightningDataModule):
+#     """
+#     DataModule used for semantic segmentation in geometric generalization project
+#     """
+
+#     def __init__(self, data_config):
+#         super().__init__()
+#         self.prepare_data_per_node = True
+#         self.data_config = data_config
+
+#     def prepare_data(self):
+#         pass
+
+#     def setup(self, stage: Optional[str] = None):
+#         # Assign train/val datasets for use in dataloaders
+#         transform = transforms.Compose([transforms.ToTensor(), DataTransform(self.data_config["preprocess"])])
+
+#         # Split into 1k val set for lr tune
+#         full_data = datasets.ImageFolder(self.data_config["full_data_path"], transform=transform)
+#         test_data = torch.utils.data.Subset(full_data, range(self.data_config["test_start"], self.data_config["test_end"]))
+#         lr_tune_data = torch.utils.data.Subset(full_data, range(self.data_config["tune_start"], self.data_config["tune_end"]))
+
+#         self.full_data, self.lr_tune_data, self.test_data = full_data, lr_tune_data, test_data
+
+#     # define your dataloaders
+#     # again, here defined for train, validate and test, not for predict as the project is not there yet.
+#     def train_dataloader(self):
+#         return DataLoader(
+#             dataset=self.full_data,
+#             batch_size=self.data_config["batch_size"],
+#             num_workers=4,
+#             drop_last=True,
+#             pin_memory=False
+#         )
+
+#     def val_dataloader(self):
+#         return DataLoader(
+#             dataset=self.lr_tune_data,
+#             batch_size=self.data_config["batch_size"],
+#             num_workers=4,
+#             drop_last=True,
+#             pin_memory=False
+#         )
+
+#     def test_dataloader(self):
+#         return DataLoader(
+#             dataset=self.test_data,
+#             batch_size=self.data_config["batch_size"],
+#             num_workers=4,
+#             pin_memory=False,
+#             drop_last=False
+#         )
+
+
+class ImageDataModule2(pl.LightningDataModule):
     """
     DataModule used for semantic segmentation in geometric generalization project
     """
@@ -68,34 +122,28 @@ class ImageDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         # Assign train/val datasets for use in dataloaders
-        transform = transforms.Compose([transforms.ToTensor(), DataTransform(self.data_config["preprocess"])])
+        transform = transforms.Compose([transforms.ToTensor(), DataTransform(imagenet_preprocess = False)])
 
         # Split into 1k val set for lr tune
-        full_data = datasets.ImageFolder(self.data_config["full_data_path"], transform=transform)
-        test_data = torch.utils.data.Subset(full_data, range(self.data_config["test_start"], self.data_config["test_end"]))
-        lr_tune_data = torch.utils.data.Subset(full_data, range(self.data_config["tune_start"], self.data_config["tune_end"]))
+        test_data = datasets.ImageFolder(self.data_config["data_path_test"], transform=transform)
+        # lr_tune_data = datasets.ImageFolder(self.data_config["tune_data_path"], transform=transform)
+        # test_data = torch.utils.data.Subset(full_data, range(self.data_config["test_start"], self.data_config["test_end"]))
+        # lr_tune_data = torch.utils.data.Subset(full_data, range(self.data_config["tune_start"], self.data_config["tune_end"]))
 
-        self.full_data, self.lr_tune_data, self.test_data = full_data, lr_tune_data, test_data
+        # self.lr_tune_data, self.test_data = lr_tune_data, test_data
+        self.test_data = test_data
 
     # define your dataloaders
     # again, here defined for train, validate and test, not for predict as the project is not there yet.
-    def train_dataloader(self):
-        return DataLoader(
-            dataset=self.full_data,
-            batch_size=self.data_config["batch_size"],
-            num_workers=4,
-            drop_last=True,
-            pin_memory=False
-        )
 
-    def val_dataloader(self):
-        return DataLoader(
-            dataset=self.lr_tune_data,
-            batch_size=self.data_config["batch_size"],
-            num_workers=4,
-            drop_last=True,
-            pin_memory=False
-        )
+    # def val_dataloader(self):
+    #     return DataLoader(
+    #         dataset=self.lr_tune_data,
+    #         batch_size=self.data_config["batch_size"],
+    #         num_workers=4,
+    #         drop_last=True,
+    #         pin_memory=False
+    #     )
 
     def test_dataloader(self):
         return DataLoader(
@@ -105,3 +153,5 @@ class ImageDataModule(pl.LightningDataModule):
             pin_memory=False,
             drop_last=False
         )
+
+    
