@@ -27,7 +27,7 @@ python main_generate_and_save_measurements_and_run_HIO.py \
 python main_generate_and_save_measurements_and_run_HIO.py \
     --data_config=configs_pr/cdp/imagenet/imagenet_cdp_config_save_measurement.yaml \
     --poisson-alpha=45
-```z
+```
 
 ## Running the Image Recovery Code
 
