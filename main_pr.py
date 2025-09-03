@@ -1,36 +1,3 @@
-# python main_pr.py \
-# --model_config=configs_pr/ffhq_model_config.yaml \
-# --diffusion_config=configs_pr/diffusion_config.yaml \
-# --data_config=configs_pr/osf/ffhq/ffhq_osf_data_config.yaml \
-# --problem_config=configs_pr/osf/ffhq/pr_osf_ffhq_config.yaml \
-# --fire_config=configs_pr/fire_config_ffhq.yaml \
-# --sig_y=0.05 --nfes=800 --gpu=0
-
-# python main_pr.py \
-# --model_config=configs_pr/imagenet_model_config.yaml \
-# --diffusion_config=configs_pr/diffusion_config.yaml \
-# --data_config=configs_pr/osf/imagenet/imagenet_osf_data_config.yaml \
-# --problem_config=configs_pr/osf/imagenet/pr_osf_imagenet_config.yaml \
-# --fire_config=configs_pr/fire_config_imagenet.yaml \
-# --sig_y=0.05 --nfes=800 --gpu=0
-
-# python main_pr.py \
-# --model_config=configs_pr/ffhq_model_config.yaml \
-# --diffusion_config=configs_pr/diffusion_config.yaml \
-# --data_config=configs_pr/cdp/ffhq/ffhq_cdp_data_config.yaml \
-# --problem_config=configs_pr/cdp/pr_cdp_config.yaml \
-# --fire_config=configs_pr/fire_config_ffhq.yaml \
-# --sig_y=0.05 --nfes=100 --gpu=0
-
-# python main_pr.py \
-# --model_config=configs_pr/imagenet_model_config.yaml \
-# --diffusion_config=configs_pr/diffusion_config.yaml \
-# --data_config=configs_pr/cdp/imagenet/imagenet_cdp_data_config.yaml \
-# --problem_config=configs_pr/cdp/pr_cdp_config.yaml \
-# --fire_config=configs_pr/fire_config_imagenet.yaml \
-# --sig_y=0.05 --nfes=100 --gpu=0
-
-
 from functools import partial
 import argparse
 import yaml
@@ -253,10 +220,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_config', type=str)
     parser.add_argument('--problem_config', type=str)
     parser.add_argument('--fire_config', type=str)
-    parser.add_argument('--noiseless', action='store_true')
-    parser.add_argument('--sig_y', type=float, default=0.05)
     parser.add_argument('--gpu', type=int, default=0)
-    parser.add_argument('--nfes', type=int, default=1000)
     parser.add_argument('--seed', type=int, default=1)
 
     args = parser.parse_args()

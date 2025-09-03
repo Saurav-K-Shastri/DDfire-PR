@@ -1,14 +1,7 @@
-# python main_generate_and_save_measurements_and_run_HIO.py --data_config=configs_pr/osf/ffhq/ffhq_osf_config_save_measurement.yaml --poisson-alpha=8
-# python main_generate_and_save_measurements_and_run_HIO.py --data_config=configs_pr/osf/imagenet/imagenet_osf_config_save_measurement.yaml --poisson-alpha=8
-
-# python main_generate_and_save_measurements_and_run_HIO.py --data_config=configs_pr/cdp/ffhq/ffhq_cdp_config_save_measurement.yaml --poisson-alpha=45
-# python main_generate_and_save_measurements_and_run_HIO.py --data_config=configs_pr/cdp/imagenet/imagenet_cdp_config_save_measurement.yaml --poisson-alpha=45
-
 from functools import partial
 import argparse
 import yaml
 import types
-import lpips
 import os
 import torch
 import matplotlib.pyplot as plt

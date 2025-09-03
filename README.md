@@ -27,7 +27,7 @@ python main_generate_and_save_measurements_and_run_HIO.py \
 python main_generate_and_save_measurements_and_run_HIO.py \
     --data_config=configs_pr/cdp/imagenet/imagenet_cdp_config_save_measurement.yaml \
     --poisson-alpha=45
-```
+```z
 
 ## Running the Image Recovery Code
 
@@ -38,8 +38,7 @@ python main_pr.py \
 --diffusion_config=configs_pr/diffusion_config.yaml \
 --data_config=configs_pr/osf/ffhq/ffhq_osf_data_config.yaml \
 --problem_config=configs_pr/osf/ffhq/pr_osf_ffhq_config.yaml \
---fire_config=configs_pr/fire_config_ffhq.yaml \
---sig_y=0.05 --nfes=800 --gpu=0
+--fire_config=configs_pr/fire_config_ffhq.yaml
 ```
 
 To run PR-CDP on FFHQ data:
@@ -49,8 +48,7 @@ python main_pr.py \
 --diffusion_config=configs_pr/diffusion_config.yaml \
 --data_config=configs_pr/cdp/ffhq/ffhq_cdp_data_config.yaml \
 --problem_config=configs_pr/cdp/pr_cdp_config.yaml \
---fire_config=configs_pr/fire_config_ffhq.yaml \
---sig_y=0.05 --nfes=100 --gpu=0
+--fire_config=configs_pr/fire_config_ffhq.yaml
 ```
 
 To run PR-OSF on ImageNet data:
@@ -60,8 +58,7 @@ python main_pr.py \
 --diffusion_config=configs_pr/diffusion_config.yaml \
 --data_config=configs_pr/osf/imagenet/imagenet_osf_data_config.yaml \
 --problem_config=configs_pr/osf/imagenet/pr_osf_imagenet_config.yaml \
---fire_config=configs_pr/fire_config_imagenet.yaml \
---sig_y=0.05 --nfes=800 --gpu=0
+--fire_config=configs_pr/fire_config_imagenet.yaml
 ```
 
 To run PR-CDP on ImageNet data:
@@ -71,8 +68,7 @@ python main_pr.py \
 --diffusion_config=configs_pr/diffusion_config.yaml \
 --data_config=configs_pr/cdp/imagenet/imagenet_cdp_data_config.yaml \
 --problem_config=configs_pr/cdp/pr_cdp_config.yaml \
---fire_config=configs_pr/fire_config_imagenet.yaml \
---sig_y=0.05 --nfes=100 --gpu=0
+--fire_config=configs_pr/fire_config_imagenet.yaml
 ```
 
 ## Evaluating Performance

@@ -35,10 +35,10 @@ gt_test_image_folder_imagenet = "/local/storage/imagenet_fire_testset/0/" # TODO
 
 # Output folders to evaluate
 output_folders = {
-    "FFHQ_OSF": (gt_test_image_folder_ffhq, "/local/storage/DDfire_PR/results/FFHQ_dumm2/pr_osf/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
-    "FFHQ_CDP": (gt_test_image_folder_ffhq, "/local/storage/DDfire_PR/results/FFHQ_dummy2/pr_cdp/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
-    "ImageNet_OSF": (gt_test_image_folder_imagenet, "/local/storage/DDfire_PR/results/ImageNet_dummy2/pr_osf/with_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
-    "ImageNet_CDP": (gt_test_image_folder_imagenet, "/local/storage/DDfire_PR/results/ImageNet_dummy2/pr_cdp/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
+    "FFHQ_OSF": (gt_test_image_folder_ffhq, "/local/storage/DDfire_PR/results/FFHQ/pr_osf/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
+    "FFHQ_CDP": (gt_test_image_folder_ffhq, "/local/storage/DDfire_PR/results/FFHQ/pr_cdp/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
+    "ImageNet_OSF": (gt_test_image_folder_imagenet, "/local/storage/DDfire_PR/results/ImageNet/pr_osf/with_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
+    "ImageNet_CDP": (gt_test_image_folder_imagenet, "/local/storage/DDfire_PR/results/ImageNet/pr_cdp/without_guidance/0/"), # TODO: CHANGE THIS TO DESIRED OUT PATH
 }
 
 num_of_samples = 1000
